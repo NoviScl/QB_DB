@@ -1,0 +1,9 @@
+{
+    "task": "qb",
+    "checkpoint": "tfidf.pickle",
+    "handler": "handler.py",
+    "requirements": false,
+    "setup": false,
+    "model_files": [],
+    "exclude": []
+}
