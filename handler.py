@@ -22,7 +22,6 @@ from dynalab.tasks.task_io import TaskIO, ROOTPATH
 import tfidf_guesser 
 from tfidf_guesser import TfidfGuesser
 
-
 # NOTE: use the following line to import modules from your repo
 sys.path.append(ROOTPATH)
 
@@ -45,9 +44,11 @@ class Handler(BaseDynaHandler):
         # self.model.to(torch.device(device_str))
         # self.model.eval()
 
-        tfidf_guesser.main()
-        with open(model_pt_path, 'rb') as f:
-            self.model = pickle.load(f)
+
+        # with open(model_pt_path, 'rb') as f:
+        #     self.model = pickle.load(f)
+        self.model = TfidfGuesser()
+        self.model.load()
         # #################################################
 
         self.initialized = True

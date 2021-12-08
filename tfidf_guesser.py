@@ -10,12 +10,15 @@ import math
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import joblib
 
 from qanta_util.qbdata import QantaDatabase
 
 kBIAS = "BIAS_CONSTANT"
 
 MODEL_PATH = 'tfidf.pickle'
+INDEX_PATH = 'index.pickle'
+ANSWERS_PATH = 'answers.pickle'
 BUZZ_NUM_GUESSES = 10
 BUZZ_THRESHOLD = 0.3
 
@@ -51,7 +54,17 @@ class TfidfGuesser:
             questions = questions[:limit]
             answers = answers[:limit]
 
-        self.tfidf = self.tfidf_vectorizer.fit_transform(questions)
+        self.tfidf_vectorizer = self.tfidf_vectorizer.fit(questions)
+        self.tfidf = self.tfidf_vectorizer.transform(questions)
+
+        with open(MODEL_PATH, 'wb') as f:
+            pickle.dump(self.tfidf_vectorizer, f)
+        
+        with open(INDEX_PATH, 'wb') as f:
+            pickle.dump(self.tfidf, f)
+        
+        with open(ANSWERS_PATH, 'wb') as f:
+            pickle.dump(self.answers, f)
 
     def guess(self, questions: List[str], max_n_guesses: Optional[int]) -> List[List[Tuple[str, float]]]:
         """
@@ -77,30 +90,41 @@ class TfidfGuesser:
 
         return guesses
 
+    def load(self):
+        with open(MODEL_PATH, 'rb') as f:
+            self.tfidf_vectorizer = pickle.load(f)
+        
+        with open(INDEX_PATH, 'rb') as f:
+            self.tfidf = pickle.load(f)
+        
+        with open(ANSWERS_PATH, 'rb') as f:
+            self.answers = pickle.load(f)
+        
+
+        
+        
+
+
+
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
 
-    # parser.add_argument("--guesstrain", default="data/qanta.train.2018.04.18.json", type=str)
-    # parser.add_argument("--guessdev", default="data/small.guessdev.json", type=str)
-    # parser.add_argument("--limit", default=-1, type=int)
+    parser = argparse.ArgumentParser()
 
-    # flags = parser.parse_args()
+    parser.add_argument("--guesstrain", default="/home/sichenglei/nlp-hw-master/data/small.guesstrain.json", type=str)
+    parser.add_argument("--limit", default=-1, type=int)
 
-    # print("Loading %s" % flags.guesstrain)
-    # guesstrain = QantaDatabase(flags.guesstrain)
-    # # guessdev = QantaDatabase(flags.guessdev)
-    
-    # tfidf_guesser = TfidfGuesser()
-    # tfidf_guesser.train(guesstrain, limit=flags.limit)
-    
-    # ## save checkpoint
-    # with open(MODEL_PATH, 'wb') as f:
-    #     pickle.dump(tfidf_guesser, f)
+    flags = parser.parse_args()
 
-    MODEL_PATH = 'tfidf.pickle'
-    with open(MODEL_PATH, 'rb') as f:
-        tfidf_guesser = pickle.load(f)
+    print("Loading %s" % flags.guesstrain)
+    guesstrain = QantaDatabase(flags.guesstrain)
+    # guessdev = QantaDatabase(flags.guessdev)
+
+    tfidf_guesser = TfidfGuesser()
+    tfidf_guesser.train(guesstrain, limit=flags.limit)    
+
+    tfidf_guesser = TfidfGuesser()
+    tfidf_guesser.load()
     
     test_questions = ["Name this painter who painted Mona Lisa"]
     print (tfidf_guesser.guess(questions = test_questions, max_n_guesses = 1)[0][0][0])
